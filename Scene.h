@@ -54,8 +54,9 @@ public:
 	int culling(int modelID, Camera cam, Triangle tri);
 	void midPointF(int , int, int modelId,Camera);
 	void draw(int x, int y, Vec3 a, Vec3 b);
-	void triRasterization(Triangle tri, int modelId);
+	void rasterization(Triangle tri, int modelId,Camera);
 	bool clipping(Vec3 a, Vec3 b,Camera);
+	Color colorFinder(int x,int y , Vec3 a, Vec3 b);
 
 
 };
