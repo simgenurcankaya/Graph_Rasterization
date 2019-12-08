@@ -55,33 +55,40 @@ double slopeCalculator(Vec3 a, Vec3 b){
   }
 }
 void Scene::draw(int x, int y, Vec3 a, Vec3 b){
-	printf("drawing\n");	
+	printf("drawing to %d %d \n",x,y);	
   double alphaX = (x-a.x)/(b.x-a.x);
   double alphaY = (y-a.y)/(b.y-a.y);
-printf("alpha %f , %f  %d %d %d \n" , alphaX,alphaY,a.colorId, b.colorId, colorsOfVertices.size());
-printf("benden selam"); 	
-  printf("Color id %d %d ", a.colorId, b.colorId);
-  cout<<colorsOfVertices[0];
+  Color *color_a = colorsOfVertices[a.colorId-1];
+  Color *color_b = colorsOfVertices[b.colorId-1];
+  double cX_r = (1-alphaX)* (color_a->r) + alphaX*color_b->r;
+  double cX_g = (1-alphaX)* (color_a->g) + alphaX*color_b->g;
+  double cX_b = (1-alphaX)*(color_a->b) + alphaX*color_b->b;
 
-  double cX_r = (1-alphaX)* colorsOfVertices[a.colorId-1]->r + alphaX*colorsOfVertices[b.colorId-1]->r;
-  double cX_g = (1-alphaX)*colorsOfVertices[a.colorId-1]->g + alphaX*colorsOfVertices[b.colorId-1]->g;
-  double cX_b = (1-alphaX)*colorsOfVertices[a.colorId-1]->b + alphaX*colorsOfVertices[b.colorId-1]->b;
 
-  double cY_r = (1-alphaY)*colorsOfVertices[a.colorId-1]->r + alphaY*colorsOfVertices[b.colorId-1]->r;
-  double cY_g = (1-alphaY)*colorsOfVertices[a.colorId-1]->g + alphaY*colorsOfVertices[b.colorId-1]->g;
-  double cY_b = (1-alphaY)*colorsOfVertices[a.colorId-1]->b + alphaY*colorsOfVertices[b.colorId-1]->b;
+  double cY_r = (1-alphaY)*color_a->r + alphaY*color_b->r;
+  double cY_g = (1-alphaY)*color_a->g + alphaY*color_b->g;
+  double cY_b = (1-alphaY)*color_a->b + alphaY*color_b->b;
  
+
  printf("cx %f %f %f ", cX_r,cX_g, cX_b);
+
  printf("xy %f %f %f ", cY_r, cY_g, cY_b);
  
-  Color c= Color(cX_r+cY_r, cX_g+cY_g, cX_b+cY_b);
-  if(c.r > 255) c.r = 255;
-  else if(c.r < 0) c.r = 0;
-  if(c.g > 255) c.g = 255;
-  else if(c.g < 0) c.g = 0;
-  if(c.b > 255) c.b = 255;
-  else if(c.b < 0) c.b = 0;
+  printf("alpha %f , %f  %d %d %d \n" , alphaX,alphaY,a.colorId, b.colorId, colorsOfVertices.size());
 
+  cX_r += cY_r;
+  cX_g += cX_g;
+  cX_b += cX_b;
+
+  if(cX_r > 255) cX_r = 255;
+  else if(cX_r < 0) cX_r = 0;
+  if(cX_g > 255) cX_g = 255;
+  else if(cX_g < 0) cX_g = 0;
+  if(cX_b > 255) cX_b = 255;
+  else if(cX_b < 0) cX_b = 0;
+
+  Color c= Color(cX_r, cX_g, cX_b);
+  
   printf("found the color");
 
   image[x][y].r = c.r;
@@ -133,7 +140,7 @@ void Scene::midPointF(int i , int j, int modelId){
     // printVec3(b);
 
     m = slopeCalculator(a,b);
-	printf("Slope is %f \n",m);
+	printf("\n a.x = %f , a.y = %f, b.x = %f , by = %f \n",a.x,a.y,b.x,b.y);
     if((b.y-a.y) >= 0 && (b.x-a.x) >= 0){ // 1.çeyrek
       if(m>0 && m <= 1){ //1.bölge
         // std::cout <<"1.çeyrek 1.bölge" << std::endl;
@@ -277,7 +284,7 @@ void Scene::midPointF(int i , int j, int modelId){
         for(x=a.x;x<int(b.x);x=x+1){
           // if (x<0 || y<0) std::cout << "4.1. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "4.1. -> "<< x << '\n';
-		  printf("Drawa gidiyor  7, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor  7, x = %d, y = %d, M = %f , a.y = %f , b.y  = %f , a.x =%f, b.x =%f\n", x,y,M,a.y,b.y,a.x,b.x);
           draw(x,y,a,b);
           if (M<=0){ // E
             M += ((a.y-b.y));
@@ -324,6 +331,7 @@ void Scene::triRasterization(Triangle tri, int modelId){
   double ymax = std::max(forEachCamVOV[modelId-1][tri.vertexIds[0]].y ,
                         std::max(forEachCamVOV[modelId-1][tri.vertexIds[1]].y , forEachCamVOV[modelId-1][tri.vertexIds[2]].y));
 
+  printf("IMDAAAAAAAAAAAAAT \n");
   ymin = (int) ymin;
   xmin = (int) xmin;
   ymax = (int) ymax;
@@ -340,26 +348,31 @@ void Scene::triRasterization(Triangle tri, int modelId){
 
       if(alpha >= 0 && beta >= 0 && gama >= 0){
         //colorları al draw et
-        Color c0 = *colorsOfVertices[tri.vertexIds[0]];
+
+        printf("it is here is it not? %f %f %f\n",alpha,beta,gama); 
+        printf("aqmqwkeq qkwe %d\n", tri.vertexIds[0]);
+        Color c0 = *colorsOfVertices[tri.vertexIds[0]-1];
         c0.r *=alpha;c0.g *=alpha;c0.b *=alpha;
-
-        Color c1 = *colorsOfVertices[tri.vertexIds[1]];
+        printf("c");
+        Color c1 = *colorsOfVertices[tri.vertexIds[1]-1];
         c1.r *=beta;c1.g *=beta;c1.b *=beta;
-
-        Color c2 = *colorsOfVertices[tri.vertexIds[2]];
+        printf("c1");
+        Color c2 = *colorsOfVertices[tri.vertexIds[2]-1];
         c2.r *=gama;c2.g *=gama;c2.b *=gama;
-
+        printf("c2");
         Color c;
         c.r = c0.r+ c1.r + c2.r;
         c.g = c0.g+ c1.g + c2.g;
         c.b = c0.b+ c1.b + c2.b;
 
+          printf("ama neden hata veriyrusn  %f %f %f \n",c.r,c.g,c.b) ;
         if(c.r>255)
           c.r = 255;
         if(c.g>255)
           c.g = 255;
         if(c.b>255)
           c.b = 255;
+
         image[i][j].r = round(c.r);
         image[i][j].g = round(c.g);
         image[i][j].b = round(c.b);
@@ -443,6 +456,7 @@ Matrix4 Scene::viewingTransform(Camera c){
 	return ret;
 }
 
+//0 not culled 1 culled
 int Scene::culling(int modelId, Camera cam, Triangle tri){
 	printf("CUlling funtion ");
 	Vec3 a = beforeViewport[modelId-1][tri.vertexIds[0]];
