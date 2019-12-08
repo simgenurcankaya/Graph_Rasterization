@@ -60,9 +60,13 @@ double slopeCalculator(Vec3 a, Vec3 b){
 }
 void Scene::draw(int x, int y, Vec3 a, Vec3 b){
 
-	printf("drawing to %d %d \n",x,y);	
+	printf("drawing to %d %d \n",x,y);
+  printVec3(a);
+  printVec3(b);
+  printf("Draw noktaları , a color ıd %d , b. color id %d total color %d \n",a.colorId,b.colorId, colorsOfVertices.size());	
   double alphaX = (x-a.x)/(b.x-a.x);
   double alphaY = (y-a.y)/(b.y-a.y);
+
   Color *color_a = colorsOfVertices[a.colorId-1];
   Color *color_b = colorsOfVertices[b.colorId-1];
   double cX_r = (1-alphaX)* (color_a->r) + alphaX*color_b->r;
@@ -75,9 +79,9 @@ void Scene::draw(int x, int y, Vec3 a, Vec3 b){
   double cY_b = (1-alphaY)*color_a->b + alphaY*color_b->b;
  
 
- printf("cx %f %f %f ", cX_r,cX_g, cX_b);
+ printf("cx %f %f %f \n", cX_r,cX_g, cX_b);
 
- printf("xy %f %f %f ", cY_r, cY_g, cY_b);
+ printf("cy %f %f %f \n", cY_r, cY_g, cY_b);
  
   printf("alpha %f , %f  %d %d %d \n" , alphaX,alphaY,a.colorId, b.colorId, colorsOfVertices.size());
 
@@ -92,14 +96,16 @@ void Scene::draw(int x, int y, Vec3 a, Vec3 b){
   if(cX_b > 255) cX_b = 255;
   else if(cX_b < 0) cX_b = 0;
 
+ printf("cx %f %f %f \n", cX_r,cX_g, cX_b);
+
   Color c= Color(cX_r, cX_g, cX_b);
   
   printf("found the color");
-
+  
   image[x][y].r = c.r;
   image[x][y].g = c.g;
   image[x][y].b = c.b;
-  printf("this could be the end of teverytihn\n");
+  printf("Draw finished\n");
 }
 
 
@@ -140,16 +146,19 @@ bool Scene::clipping(Vec3 a, Vec3 b,Camera c){
   int abit = 0;
   int bbit = 0;
 
-  printf("Clipping init a = %d b = %d \n", abit,bbit);
-  if(a.x < c.left) abit += 1; //else abit[3] = 0;
-  if(a.x >c.right) abit +=2;// else abit[2] = 0;
-  if(a.y > c.top) abit += 8; //else abit[0] = 0;
-  if(a.y< c.bottom) abit +=4;// else abit[1] = 0;
+  printf("Clipping init left %F, right %f top %f bottom = %f \n", c.left,c.right, c.top,c.bottom);
+  printVec3(a);
+  printVec3(b);
+  printf("vectorsssssssss\n");
+  if(a.x < 0) abit += 1; //else abit[3] = 0;
+  if(a.x >c.horRes) abit +=2;// else abit[2] = 0;
+  if(a.y > c.verRes) abit += 8; //else abit[0] = 0;
+  if(a.y< 0) abit +=4;// else abit[1] = 0;
 
-  if(b.x < c.left) bbit += 1;// else bbit[3] = 0;
-  if(b.x >c.right) bbit += 2; //else bbit[2] = 0;
-  if(b.y > c.top) bbit+= 8; //else bbit[0] = 0;
-  if(b.y< c.bottom) bbit += 4;// else bbit[1] = 0;
+  if(b.x < 0) bbit += 1;// else bbit[3] = 0;
+  if(b.x >c.horRes) bbit += 2; //else bbit[2] = 0;
+  if(b.y > c.verRes) bbit+= 8; //else bbit[0] = 0;
+  if(b.y< 0) bbit += 4;// else bbit[1] = 0;
 
 
 
@@ -258,11 +267,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // y=a.y;
         double M = 1.0*(a.y-b.y) + 0.5*(b.x-a.x);
-        for(x=a.x;x<int(b.x);x=x+1){
+        for (x=a.x;x<int(b.x) && x < c.horRes && x>= 0 && y< c.verRes && y>= 0;x=x+1){
           // if (x<0 || y<0) std::cout << "1.1. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "1.1. -> "<< x << '\n';
-		  printf("Drawa gidiyor 1, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
-		  printf("aloo");
+		  printf("Drawa gidiyor 1, x = %d, y = %d \n", x,y);
           draw(x,y,a,b);
           if (M<0){ // NE
             y += 1;
@@ -279,10 +287,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // x=a.x;
         double M = 0.5*(a.y-b.y) + 1.0*(b.x-a.x);
-        for(y=a.y;y<int(b.y);y=y+1){
+        for(y=a.y;y<int(b.y) && x < c.horRes && x>= 0 && y< c.verRes && y>= 0 ;y=y+1){
           // if (x<0 || y<0) std::cout << "1.2. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "1.2. -> "<< x << '\n';
-		  printf("Drawa gidiyor 2, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor 2, x = %d, y = %d, \n", x,y);
           draw(x,y,a,b);
           if (M<=0){ // N
             M += (b.x-a.x);
@@ -302,10 +310,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // x=a.x;
         double M = -0.5*(a.y-b.y) + 1.0*(b.x-a.x);
-        for(y=a.y;y<int(b.y);y=y+1){
+        for(y=a.y;y<int(b.y) &&  x < c.horRes && x>= 0 && y< c.verRes && y>= 0;y=y+1){
           // if (x<0 || y<0) std::cout << "2.2. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "2.2. -> "<< x << '\n';
-		  printf("Drawa gidiyor 3, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor 3, x = %d, y = %d,  \n", x,y);
           draw(x,y,a,b);
           if (M>0){ // N
             M += ((b.x-a.x));
@@ -322,10 +330,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // y=a.y;
         double M = -1.0*(a.y-b.y) + 0.5*(b.x-a.x);
-        for(x=a.x;x>int(b.x);x=x-1){
+        for(x=a.x;x>int(b.x) &&  x < c.horRes && x>= 0 && y< c.verRes && y>= 0;x=x-1){
           // if (x<0 || y<0) std::cout << "2.1. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "2.1. -> "<< x << '\n';
-		  printf("Drawa gidiyor  4 , x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor  4 , x = %d, y = %d \n", x,y);
           draw(x,y,a,b);
           if (M>0){ // NW
             // std::cout << "y artacak" << std::endl;
@@ -347,7 +355,7 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // x=a.x;
         double M = -0.5*(a.y-b.y) - 1.0*(b.x-a.x);
-        for(y=a.y;y>int(b.y);y=y-1){
+        for(y=a.y;y>int(b.y) &&  x < c.horRes && x>= 0 && y< c.verRes && y>= 0 ;y=y-1){
           // if (x<0 || y<0) std::cout << "3.2. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "3.2. -> "<< x << '\n';
 		  printf("Drawa gidiyor  5, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
@@ -367,10 +375,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // y=a.y;
         double M = -1.0*(a.y-b.y) - 0.5*(b.x-a.x);
-        for(x=a.x;x>int(b.x);x=x-1){
+        for(x=a.x;x>int(b.x) &&  x < c.horRes && x>= 0 && y< c.verRes && y>= 0;x=x-1){
           // if (x<0 || y<0) std::cout << "3.1. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "3.1. -> "<< x << '\n';
-		  printf("Drawa gidiyor  6, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor  6, x = %d, y = %d, \n", x,y);
           draw(x,y,a,b);
           if (M>0){ // W
             M += (-(a.y-b.y));
@@ -391,7 +399,7 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // y=a.y;
         double M = 1.0*(a.y-b.y) - 0.5*(b.x-a.x);
-        for(x=a.x;x<int(b.x);x=x+1){
+        for(x=a.x;x<int(b.x) &&  x < c.horRes && x>= 0 && y< c.verRes && y>= 0;x=x+1){
           // if (x<0 || y<0) std::cout << "4.1. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "4.1. -> "<< x << '\n';
 		  printf("Drawa gidiyor  7, x = %d, y = %d, M = %f , a.y = %f , b.y  = %f , a.x =%f, b.x =%f\n", x,y,M,a.y,b.y,a.x,b.x);
@@ -411,10 +419,10 @@ void Scene::midPointF(int i , int j, int modelId,Camera c){
         int y=a.y;
         // x=a.x;
         double M = 0.5*(a.y-b.y) - 1.0*(b.x-a.x);
-        for(y=a.y;y>int(b.y);y=y-1){
+        for(y=a.y;y>int(b.y) && x < c.horRes && x>= 0 && y< c.verRes && y>= 0 ;y=y-1){
           // if (x<0 || y<0) std::cout << "4.2. x-> "<< x << " y-> "<< y << '\n';
           // if (x ==y) std::cout << "4.2. -> "<< x << '\n';
-		  printf("Drawa gidiyor  8, x = %d, y = %d, a = %d , b = %d \n", x,y,a,b);
+		  printf("Drawa gidiyor  8, x = %d, y = %d\n", x,y);
           draw(x,y,a,b);
           if (M<0){ // SE
             x += 1;
@@ -441,14 +449,20 @@ void Scene::triRasterization(Triangle tri, int modelId){
   double ymax = std::max(forEachCamVOV[modelId-1][tri.vertexIds[0]].y ,
                         std::max(forEachCamVOV[modelId-1][tri.vertexIds[1]].y , forEachCamVOV[modelId-1][tri.vertexIds[2]].y));
 
-  printf("IMDAAAAAAAAAAAAAT \n");
-  ymin = (int) ymin;
-  xmin = (int) xmin;
-  ymax = (int) ymax;
-  xmax = (int) xmax;
+  
+  ymin = std::max ((int) ymin ,0);
+  xmin = std::max ( (int) xmin, 0);
+  ymax = std::min ((int) ymax, 749);
+  xmax = std::min ((int) xmax,1499);
+  if(ymax<0) ymax = 0;
+  if(xmax<0) xmax = 0;
+  if(ymin<0) ymin = 0;
+  if(xmin<0) xmin= 0;
 
+  printf("tri Rasterization ymin = %f ymax =%f , xmin = %f xmax = %f  modelID %d foreach %u  %u \n",ymin,ymax,xmin,xmax,modelId, forEachCamVOV.size() , beforeViewport.size());
   for(int j=ymin; j<=ymax ;j=j+1){
     for(int i=xmin; i<=xmax; i=i+1){
+      
       double alpha = f12(i,j,tri,modelId-1)/f12(forEachCamVOV[modelId-1][tri.vertexIds[0]].x,
                                                 forEachCamVOV[modelId-1][tri.vertexIds[0]].y,tri,modelId-1);
       double beta = f20(i,j,tri,modelId-1)/ f20(forEachCamVOV[modelId-1][tri.vertexIds[1]].x,
@@ -461,6 +475,7 @@ void Scene::triRasterization(Triangle tri, int modelId){
 
         printf("it is here is it not? %f %f %f\n",alpha,beta,gama); 
         printf("aqmqwkeq qkwe %d\n", tri.vertexIds[0]);
+
         Color c0 = *colorsOfVertices[tri.vertexIds[0]-1];
         c0.r *=alpha;c0.g *=alpha;c0.b *=alpha;
         printf("c");
@@ -475,7 +490,7 @@ void Scene::triRasterization(Triangle tri, int modelId){
         c.g = c0.g+ c1.g + c2.g;
         c.b = c0.b+ c1.b + c2.b;
 
-          printf("ama neden hata veriyrusn  %f %f %f \n",c.r,c.g,c.b) ;
+          printf("ama neden hata veriyrusn  %f %f %f %d %d \n",c.r,c.g,c.b, i ,j) ;
         if(c.r>255)
           c.r = 255;
         if(c.g>255)
@@ -495,7 +510,7 @@ void Scene::triRasterization(Triangle tri, int modelId){
 
 Matrix4 Scene::rotation(Matrix4 res, Rotation rotation){
 	printf("Rotation start \n");
-	Vec3 u = {rotation.ux,rotation.uy,rotation.uz,-1};
+	Vec3 u = Vec3(rotation.ux,rotation.uy,rotation.uz,-1);
 	Vec3 v = constructV(u);
 	Vec3 w = crossProductVec3(u,v);
     w.colorId = -1;
