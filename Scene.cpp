@@ -29,6 +29,10 @@ vector<vector<Vec3>> verticesOfVertices;
 vector<vector<Vec3>> forEachCamVOV;
 vector<vector<Vec3>> beforeViewport;
 
+Vec3 vectorA;
+Vec3 vectorB;
+bool isClipped ;
+
 
 Vec3 constructV(Vec3 u){
   double temp_min = ABS(u.x);
@@ -55,6 +59,7 @@ double slopeCalculator(Vec3 a, Vec3 b){
   }
 }
 void Scene::draw(int x, int y, Vec3 a, Vec3 b){
+
 	printf("drawing to %d %d \n",x,y);	
   double alphaX = (x-a.x)/(b.x-a.x);
   double alphaY = (y-a.y)/(b.y-a.y);
@@ -122,8 +127,99 @@ double f20(double x,double y,Triangle tri,int i){ // i -> modelId
           forEachCamVOV[i][tri.vertexIds[2]].y * forEachCamVOV[i][tri.vertexIds[0]].x );
 }
 
+bool Scene::clipping(Vec3 a, Vec3 b,Camera c){
+  isClipped = false;
 
-void Scene::midPointF(int i , int j, int modelId){
+  printf("CLippiinggg \n");
+  // if(c.left<= a.x && a.x <= c.right && c.left <= b.x && b.x <= c.right && c.bottom<= a.y && a.y <= c.top && c.bottom <= b.y && b.y <= c.top ) //xler  yler içerde
+  //     return false;
+  // else{
+
+  //   }
+              // t,b,r,l
+  int abit = 0;
+  int bbit = 0;
+
+  printf("Clipping init a = %d b = %d \n", abit,bbit);
+  if(a.x < c.left) abit += 1; //else abit[3] = 0;
+  if(a.x >c.right) abit +=2;// else abit[2] = 0;
+  if(a.y > c.top) abit += 8; //else abit[0] = 0;
+  if(a.y< c.bottom) abit +=4;// else abit[1] = 0;
+
+  if(b.x < c.left) bbit += 1;// else bbit[3] = 0;
+  if(b.x >c.right) bbit += 2; //else bbit[2] = 0;
+  if(b.y > c.top) bbit+= 8; //else bbit[0] = 0;
+  if(b.y< c.bottom) bbit += 4;// else bbit[1] = 0;
+
+
+
+  printf("Clipping after deciding a = %d b = %d \n", abit,bbit);
+  if((abit | bbit) ==0){
+    printf("trivial acccccept\n");  // ikiside içerde 
+    return false;}
+  else if(abit & bbit){ // trivial reject
+    vectorA = Vec3(0,0,0,-1);
+    vectorB = Vec3(0,0,0,-1);
+    printf("trivial reject\n");
+    isClipped = true;
+    printf("isClipped %d \n", isClipped);
+    return true;
+  }
+  else{
+    unsigned char xxx;
+    double x,y;
+
+    if(abit != 0) xxx = abit;
+    else xxx = bbit;
+
+    //intersection
+
+    if(xxx &8){
+      x = a.x + (b.x- a.x) * (8 - a.y) / ( b.y- a.y);
+      y = 8;
+    }
+    else if(xxx & '4'){
+      x = a.x + (b.x- a.x) * (4 - a.y) / ( b.y- a.y);
+      y = '4';
+    }
+    else if(xxx & 2){
+      y = a.y +(b.y- a.y) * (10-a.x) / (b.x -a.x);
+      x = 10;
+    }
+    else if(xxx & 1){
+      y = a.y +(b.y- a.y) * (4-a.x) / (b.x -a.x);
+      x = 4;
+    }
+
+    // intersection found 
+    printf("Clipping bitmek uzree \n");
+    if(xxx == abit){
+      
+      vectorA = Vec3(x,y,1,a.colorId);
+      vectorB = Vec3(b.x,b.y,b.z,b.colorId);
+      printf("New a = ");
+      printVec3(vectorA);
+      printf("\n  b  = ");
+      printVec3(vectorB);
+      return true;
+    }
+
+    else{
+
+      vectorB = Vec3(x,y,1,b.colorId);
+      vectorA = Vec3(a.x,a.y,a.z,a.colorId);
+      printf(" a = ");
+      printVec3(vectorA);
+      printf("\n New b  = ");
+      printVec3(vectorB);
+      return true;
+    }
+    
+  }
+
+}
+
+void Scene::midPointF(int i , int j, int modelId,Camera c){
 	printf("Midpoint function");
 	Triangle tri = models[i]->triangles[j];
 	
@@ -136,10 +232,24 @@ void Scene::midPointF(int i , int j, int modelId){
     Vec3 a = forEachCamVOV[modelId-1][tri.vertexIds[i]];
     Vec3 b = forEachCamVOV[modelId-1][tri.vertexIds[(i+1)%3]];
 
+//clipping varsa 
+  if (clipping(a,b,c) && (isClipped == false)) {
+    printf("CLiippeedddd \n"); 
+    a = vectorA;
+    b = vectorB;
+  } 
+  if(isClipped) continue;
+   
+
     // printVec3(a);
     // printVec3(b);
 
+    printf("midpoint yapılan a: ");
+    printVec3(a);
+    printf("\n b= ");
+    printVec3(b);
     m = slopeCalculator(a,b);
+  if(m == 0 ) continue;
 	printf("\n a.x = %f , a.y = %f, b.x = %f , by = %f \n",a.x,a.y,b.x,b.y);
     if((b.y-a.y) >= 0 && (b.x-a.x) >= 0){ // 1.çeyrek
       if(m>0 && m <= 1){ //1.bölge
@@ -373,9 +483,9 @@ void Scene::triRasterization(Triangle tri, int modelId){
         if(c.b>255)
           c.b = 255;
 
-        image[i][j].r = round(c.r);
-        image[i][j].g = round(c.g);
-        image[i][j].b = round(c.b);
+        image[i][j].r = (c.r);
+        image[i][j].g = (c.g);
+        image[i][j].b = (c.b);
       }
     }
   }
@@ -443,6 +553,11 @@ Matrix4 Scene::viewingTransform(Camera c){
                        {c.w.x,c.w.y,c.w.z, -(c.w.x*c.pos.x + c.w.y*c.pos.y + c.w.z*c.pos.z)},
                        {0,0,0,1}};
 
+  double otrh[4][4] = {{ (2)/(c.right - c.left), 0 ,0,-(c.top + c.bottom)/(c.top - c.bottom)},
+                       {0 ,2/(c.top -c.bottom),0,-(c.top + c.bottom)/(c.top - c.bottom)},
+                        {0                  ,0                   ,-2/(c.far -c.near),-(c.far +c.near)/(c.far - c.near)},
+                          {0                  ,0                   , 0                  ,1}};
+  
 	
     double per[4][4] = {{ (2*c.near)/(c.right - c.left), 0                  ,(c.right + c.left)/(c.right - c.left),0},
                            {0                 ,2*c.near/(c.top -c.bottom)      ,(c.top + c.bottom)/(c.top - c.bottom),0},
@@ -452,7 +567,14 @@ Matrix4 Scene::viewingTransform(Camera c){
 
 	Matrix4 perMtx = Matrix4(per);
 	Matrix4 camMtx = Matrix4(cam);
-    Matrix4 ret = multiplyMatrixWithMatrix(perMtx,camMtx);
+  Matrix4 othMtx = Matrix4(otrh);
+  Matrix4 ret;
+  printf("Projection type %d", projectionType);
+  if(projectionType == 1) //perspective
+    ret = multiplyMatrixWithMatrix(perMtx,camMtx);
+  else ret = multiplyMatrixWithMatrix(othMtx,camMtx);
+  cout<<"Viewing Transform MAtrix  \n" << ret;
+
 	return ret;
 }
 
@@ -474,6 +596,8 @@ int Scene::culling(int modelId, Camera cam, Triangle tri){
     return 0;
 	
 }
+
+
 
 void Scene::forwardRenderingPipeline(Camera *cam){
 	printf("Starting vertex processing\n");
@@ -507,27 +631,28 @@ void Scene::forwardRenderingPipeline(Camera *cam){
 			forEachCamVOV[i][j] = v3;
 		}
 	}
-	printf("Buralara geldik !! \n");
+//	printf("Buralara geldik !! \n");
 
 	for(int i = 0 ; i<models.size(); i++){
 		for(int j= 0; j< models[i]->numberOfTriangles; j++){
-			printf("inside of for  i = %d , j = %d \n",i,j);
+	//		printf("inside of for  i = %d , j = %d \n",i,j);
 			if(cullingEnabled && culling(i+1,*cam,models[i]->triangles[j]) == 0 ) continue;
-			printf("?????????????????????? \n");
+		//	printf("?????????????????????? \n");
+
 			if(models[i]->type == 0) // wireframe
 			{
-				printf("call midpoint %d\n",models[i]->modelId  );
-				midPointF(i , j , models[i]->modelId);
+			//	printf("call midpoint %d\n",models[i]->modelId  );
+				midPointF(i , j , models[i]->modelId,*cam);
 				//midPointF(0,0,1);
-				printf("NASI YA \n");
+				//printf("NASI YA \n");
 				}
 			else{
-				printf("call rasterizatpn \n");
+		//		printf("call rasterizatpn \n");
 				triRasterization(models[i]->triangles[j], models[i]->modelId);
 			}
 		}
 	}
-	printf("Cıktık yine yollaraaa \n");
+//	printf("Cıktık yine yollaraaa \n");
 
 
 
@@ -542,11 +667,11 @@ void Scene::vertex_processing(){
 		printf("Sending model %d to transform \n", i);	
 		modelingMatrix = modelingTransform(*models.at(i));
 		cout<< "Modeling matrix \n"<<modelingMatrix;
-		printf("ahzına tulkurmus\n");
+	//	printf("ahzına tulkurmus\n");
 		vector<Vec3> newVertices;
 		Vec3 dummy_vector = Vec3(0,0,0,-1);
 		newVertices.push_back(dummy_vector);
-		printf("merhabalar\n");
+	//	printf("merhabalar\n");
 		for( int j = 0 ; j< vertices.size(); j++ ){
 			hom_point = Vec4(vertices[j]->x,vertices[j]->y,vertices[j]->z,1,-1);
 			result_point = multiplyMatrixWithVec4(modelingMatrix,hom_point);

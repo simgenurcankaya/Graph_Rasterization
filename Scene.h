@@ -52,9 +52,10 @@ public:
 	Matrix4 scaling(Matrix4, Scaling sca);
 	Matrix4 viewingTransform(Camera c);
 	int culling(int modelID, Camera cam, Triangle tri);
-	void midPointF(int , int, int modelId);
+	void midPointF(int , int, int modelId,Camera);
 	void draw(int x, int y, Vec3 a, Vec3 b);
 	void triRasterization(Triangle tri, int modelId);
+	bool clipping(Vec3 a, Vec3 b,Camera);
 
 
 };
